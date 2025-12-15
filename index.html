@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Audio Skim Generation for Environmental Audio Recordings</title>
+
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+        integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <style>
+    video.sample_video {
+      width: 400px;
+      max-width: 100%;
+      height: auto;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Title and Authors -->
+  <div id="header" class="container text-center my-4">
+    <h1>Audio Skim Generation for Environmental Audio Recordings</h1>
+    <p class="mt-3 mb-1"><strong>Modan Tailleur, Mathieu Lagrange, Pierre Aumond, Vincent Tourre</strong></p>
+    <p>Contact: <a href="mailto:modan.tailleur@ls2n.fr">modan.tailleur@ls2n.fr</a></p>
+  </div>
+
+  <!-- Abstract -->
+  <div class="container">
+    <h2>Abstract</h2>
+    <p>
+    Environmental audio recordings offer rich information for soundscape analysis but are often too lengthy for practical 
+    listening. To address this, we introduce an automatic method for generating audio summaries, which we call audio skims, 
+    designed to highlight key characteristics of a full-length audio. Our approach balances two objectives: Temporal Consistency 
+    (TC), which reflects how closely the summary preserves the temporal structure of the full-length audio, and Source Diversity 
+    (SD), which reflects how well the summary represents the diversity of sound sources of the full-length audio. We define a 
+    controllable parameter z to modulate this trade-off and propose a two-stage audio skim generation pipeline: Main Events 
+    Identification (MEI) via K-means clustering of audio embeddings, and Sequencing of Main Events (SME) using a greedy algorithm 
+    optimized for the z-weighted balance between SD and TC. We validate our method on a dataset of 24-hour urban recordings 
+    by generating 1-minute audio skims. Through both objective and subjective evaluations, we show that our method produces 
+    high-quality audio skims and enables controllable trade-offs between TC and SD. This approach supports practical and 
+    customizable access to environmental recordings, with applications in soundscape research, urban planning, and public 
+    communication.
+    </p>
+    <p>This is the companion page for the paper: TBF</p>
+    <p>Please, cite as: TBF</p>
+    <p>Experience code is available in <a href="https://github.com/modantailleur/paperAudioSummary">this GitHub repository</a>.</p>
+  </div>
+
+    <!-- Main Evaluation -->
+    <div class="container mt-5" id="table_techniques">
+    <h2>Audio Skims</h2>
+    <p>Below, we present audio skims created for full-length audios recorded in 4 distinct environments: the city center of 
+        a large french city, a neighboorhood closeby to the city center, a residential area, and a peri-urban area. For each
+        of those environments, we first show the skims produced by our baselines, which are random sampling and downsampling, 
+        None of those methods allow a controllable trade-off between temporal consistency and source diversity. 
+        Then, we show the skims produced by our method, and the expert reference produced by a sound engineer, 
+        which allow to control this trade-off using a user-defined parameter z. As time is not linear in the audio skims, 
+        we display the time elapsed in the video using a clock.
+    </p>
+
+
+    <h4>City Center</h4>
+
+
+    <table class="table table-responsive">
+        <thead>
+        <!-- First header row for single-audio methods -->
+        <tr>
+            <th>Method</th>
+            <th></th>
+            <th class="d-none"></th> <!-- Hidden placeholders to keep table width aligned -->
+            <th class="d-none"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Sub-header for single-audio methods -->
+        <!-- <tr class="table-secondary">
+            <td colspan="4"><strong>Single-audio methods</strong></td>
+        </tr> -->
+        <tr>
+            <td>Random</td>
+            <td colspan="3">
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/block_length=8+dataset=A_eval1+num_block=12+s_type=random_summary+seed_summary=0+step=summary_summary_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+        </tr>
+        <tr>
+            <td>Downsampling</td>
+            <td colspan="3">
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/block_length=8+dataset=A_eval1+num_block=12+s_type=downsample_summary+seed_summary=0+step=summary_summary_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+        </tr>
+
+        <!-- Sub-header for scenario-dependent methods -->
+        <!-- <tr class="table-secondary">
+            <td colspan="4"><strong>Scenario-dependent methods</strong></td>
+        </tr> -->
+        <!-- Second header row for scenario-based methods -->
+        <tr>
+            <th></th>
+            <th>High TC, Low SD (z=0.0)</th>
+            <th>Mid TC, Mid SD (z=0.5)</th>
+            <th>Low TC, High SD (z=1.0)</th>
+        </tr>
+        <tr>
+            <td>Ours</td>
+            <td>
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/a_beta=5.0+a_theta=10.0+block_length=8+c_method=kmeans+cr=15+dataset=A_eval1+emb=clap+greedy_batch=1+k_beta=6+k_theta=3+n_iter=0+num_block=12+period=15+s_type=greedy_summary+scen=0.0+seed_clusters=0+step=summary_summary_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+            <td>
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/a_beta=5.0+a_theta=10.0+block_length=8+c_method=kmeans+cr=15+dataset=A_eval1+emb=clap+greedy_batch=1+k_beta=6+k_theta=3+n_iter=0+num_block=12+period=15+s_type=greedy_summary+scen=0.5+seed_clusters=0+step=summary_summary_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+            <td>
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/a_beta=5.0+a_theta=10.0+block_length=8+c_method=kmeans+cr=15+dataset=A_eval1+emb=clap+greedy_batch=1+k_beta=6+k_theta=3+n_iter=0+num_block=12+period=15+s_type=greedy_summary+scen=1.0+seed_clusters=0+step=summary_summary_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+        </tr>
+        <tr>
+            <td>Expert Reference</td>
+            <td>
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/Soundscape_A_eval1_scen0_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+            <td>
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/Soundscape_A_eval1_scen50_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+            <td>
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/Soundscape_A_eval1_scen100_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <!-- Main Evaluation -->
+    <div class="container mt-5" id="table_techniques">
+    <h4>City Neighborhood</h4>
+
+    <table class="table table-responsive">
+        <thead>
+        <!-- First header row for single-audio methods -->
+        <tr>
+            <th>Method</th>
+            <th></th>
+            <th class="d-none"></th> <!-- Hidden placeholders to keep table width aligned -->
+            <th class="d-none"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Sub-header for single-audio methods -->
+        <!-- <tr class="table-secondary">
+            <td colspan="4"><strong>Single-audio methods</strong></td>
+        </tr> -->
+        <tr>
+            <td>Random</td>
+            <td colspan="3">
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/block_length=8+dataset=B_eval1+num_block=12+s_type=random_summary+seed_summary=0+step=summary_summary_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+        </tr>
+        <tr>
+            <td>Downsampling</td>
+            <td colspan="3">
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/block_length=8+dataset=B_eval1+num_block=12+s_type=downsample_summary+seed_summary=0+step=summary_summary_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+        </tr>
+
+        <!-- Sub-header for scenario-dependent methods -->
+        <!-- <tr class="table-secondary">
+            <td colspan="4"><strong>Scenario-dependent methods</strong></td>
+        </tr> -->
+        <!-- Second header row for scenario-based methods -->
+        <tr>
+            <th></th>
+            <th>High TC, Low SD (z=0.0)</th>
+            <th>Mid TC, Mid SD (z=0.5)</th>
+            <th>Low TC, High SD (z=1.0)</th>
+        </tr>
+        <tr>
+            <td>Ours</td>
+            <td>
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/a_beta=5.0+a_theta=10.0+block_length=8+c_method=kmeans+cr=15+dataset=B_eval1+emb=clap+greedy_batch=1+k_beta=6+k_theta=3+n_iter=0+num_block=12+period=15+s_type=greedy_summary+scen=0.0+seed_clusters=0+step=summary_summary_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+            <td>
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/a_beta=5.0+a_theta=10.0+block_length=8+c_method=kmeans+cr=15+dataset=B_eval1+emb=clap+greedy_batch=1+k_beta=6+k_theta=3+n_iter=0+num_block=12+period=15+s_type=greedy_summary+scen=0.5+seed_clusters=0+step=summary_summary_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+            <td>
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/a_beta=5.0+a_theta=10.0+block_length=8+c_method=kmeans+cr=15+dataset=B_eval1+emb=clap+greedy_batch=1+k_beta=6+k_theta=3+n_iter=0+num_block=12+period=15+s_type=greedy_summary+scen=1.0+seed_clusters=0+step=summary_summary_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+        </tr>
+        <tr>
+            <td>Expert Reference</td>
+            <td>
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/Soundscape_B_eval1_scen0_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+            <td>
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/Soundscape_B_eval1_scen50_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+            <td>
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/Soundscape_B_eval1_scen100_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <!-- Main Evaluation -->
+    <div class="container mt-5" id="table_techniques">
+    <h4>Residential Area</h4>
+
+    <table class="table table-responsive">
+        <thead>
+        <!-- First header row for single-audio methods -->
+        <tr>
+            <th>Method</th>
+            <th></th>
+            <th class="d-none"></th> <!-- Hidden placeholders to keep table width aligned -->
+            <th class="d-none"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Sub-header for single-audio methods -->
+        <!-- <tr class="table-secondary">
+            <td colspan="4"><strong>Single-audio methods</strong></td>
+        </tr> -->
+        <tr>
+            <td>Random</td>
+            <td colspan="3">
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/block_length=8+dataset=C_eval1+num_block=12+s_type=random_summary+seed_summary=0+step=summary_summary_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+        </tr>
+        <tr>
+            <td>Downsampling</td>
+            <td colspan="3">
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/block_length=8+dataset=C_eval1+num_block=12+s_type=downsample_summary+seed_summary=0+step=summary_summary_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+        </tr>
+
+        <!-- Sub-header for scenario-dependent methods -->
+        <!-- <tr class="table-secondary">
+            <td colspan="4"><strong>Scenario-dependent methods</strong></td>
+        </tr> -->
+        <!-- Second header row for scenario-based methods -->
+        <tr>
+            <th></th>
+            <th>High TC, Low SD (z=0.0)</th>
+            <th>Mid TC, Mid SD (z=0.5)</th>
+            <th>Low TC, High SD (z=1.0)</th>
+        </tr>
+        <tr>
+            <td>Ours</td>
+            <td>
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/a_beta=5.0+a_theta=10.0+block_length=8+c_method=kmeans+cr=15+dataset=C_eval1+emb=clap+greedy_batch=1+k_beta=6+k_theta=3+n_iter=0+num_block=12+period=15+s_type=greedy_summary+scen=0.0+seed_clusters=0+step=summary_summary_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+            <td>
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/a_beta=5.0+a_theta=10.0+block_length=8+c_method=kmeans+cr=15+dataset=C_eval1+emb=clap+greedy_batch=1+k_beta=6+k_theta=3+n_iter=0+num_block=12+period=15+s_type=greedy_summary+scen=0.5+seed_clusters=0+step=summary_summary_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+            <td>
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/a_beta=5.0+a_theta=10.0+block_length=8+c_method=kmeans+cr=15+dataset=C_eval1+emb=clap+greedy_batch=1+k_beta=6+k_theta=3+n_iter=0+num_block=12+period=15+s_type=greedy_summary+scen=1.0+seed_clusters=0+step=summary_summary_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+        </tr>
+        <tr>
+            <td>Expert Reference</td>
+            <td>
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/Soundscape_C_eval1_scen0_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+            <td>
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/Soundscape_C_eval1_scen50_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+            <td>
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/Soundscape_C_eval1_scen100_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <!-- Main Evaluation -->
+    <div class="container mt-5" id="table_techniques">
+    <h4>Peri-Urban Area</h4>
+
+    <table class="table table-responsive">
+        <thead>
+        <!-- First header row for single-audio methods -->
+        <tr>
+            <th>Method</th>
+            <th></th>
+            <th class="d-none"></th> <!-- Hidden placeholders to keep table width aligned -->
+            <th class="d-none"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Sub-header for single-audio methods -->
+        <!-- <tr class="table-secondary">
+            <td colspan="4"><strong>Single-audio methods</strong></td>
+        </tr> -->
+        <tr>
+            <td>Random</td>
+            <td colspan="3">
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/block_length=8+dataset=D_eval1+num_block=12+s_type=random_summary+seed_summary=0+step=summary_summary_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+        </tr>
+        <tr>
+            <td>Downsampling</td>
+            <td colspan="3">
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/block_length=8+dataset=D_eval1+num_block=12+s_type=downsample_summary+seed_summary=0+step=summary_summary_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+        </tr>
+
+        <!-- Sub-header for scenario-dependent methods -->
+        <!-- <tr class="table-secondary">
+            <td colspan="4"><strong>Scenario-dependent methods</strong></td>
+        </tr> -->
+        <!-- Second header row for scenario-based methods -->
+        <tr>
+            <th></th>
+            <th>High TC, Low SD (z=0.0)</th>
+            <th>Mid TC, Mid SD (z=0.5)</th>
+            <th>Low TC, High SD (z=1.0)</th>
+        </tr>
+        <tr>
+            <td>Ours</td>
+            <td>
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/a_beta=5.0+a_theta=10.0+block_length=8+c_method=kmeans+cr=15+dataset=D_eval1+emb=clap+greedy_batch=1+k_beta=6+k_theta=3+n_iter=0+num_block=12+period=15+s_type=greedy_summary+scen=0.0+seed_clusters=0+step=summary_summary_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+            <td>
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/a_beta=5.0+a_theta=10.0+block_length=8+c_method=kmeans+cr=15+dataset=D_eval1+emb=clap+greedy_batch=1+k_beta=6+k_theta=3+n_iter=0+num_block=12+period=15+s_type=greedy_summary+scen=0.5+seed_clusters=0+step=summary_summary_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+            <td>
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/a_beta=5.0+a_theta=10.0+block_length=8+c_method=kmeans+cr=15+dataset=D_eval1+emb=clap+greedy_batch=1+k_beta=6+k_theta=3+n_iter=0+num_block=12+period=15+s_type=greedy_summary+scen=1.0+seed_clusters=0+step=summary_summary_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+        </tr>
+        <tr>
+            <td>Expert Reference</td>
+            <td>
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/Soundscape_D_eval1_scen0_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+            <td>
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/Soundscape_D_eval1_scen50_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+            <td>
+            <video controls class="sample_video">
+                <source src="./summaries_audiovisual/video/Soundscape_D_eval1_scen100_clock.mp4" type="video/mp4">
+            </video>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    </div>
+
+
+
+  <div class="container mt-3">
+    <p>As you can hear, since the dog audio resembles speech, the source separation and VAD do not produce perfect results in our method. However, you can hear that it preserves the sound scene better than the other methods.</p>
+  </div></div>
+
+  <!-- Ablation Study -->
+  <div class="container mt-5" id="table_effects">
+    <h2>Audio-Visual Examples</h2>
+    <p>
+    Audio skims are easier to interpret when accompanied by time-period representations, as 
+    the time elapsed can potentially be non-linear.  However, using 
+    video solely to indicate elapsed time makes limited use of its potential as a medium. We propose here an approach to enhance 
+    the video with additional information to help visually the user in exploring the soundscape represented in the audio skim. 
+    In particular, we display the detected sound sources using the top two class outputs from PANNs, an audio classifier similar to BEATs 
+    presented in the paper, and computed with sliding windows. The size of each displayed word reflects the model's confidence 
+    in its prediction. 
+    Only the most relevant classes are shown, while less important ones are filtered out.
+    </p>
+
+    <table class="table table-responsive">
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>High TC, Low SD (z=0.0)</th>
+          <th>Mid TC, Mid SD (z=0.5)</th>
+          <th>Low TC, High SD (z=1.0)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Ours</td>
+          <td><video controls class="sample_video"><source src="./summaries_audiovisual/video/a_beta=5.0+a_theta=10.0+block_length=8+c_method=kmeans+cr=15+dataset=D_eval1+emb=clap+greedy_batch=1+k_beta=6+k_theta=3+n_iter=0+num_block=12+period=15+s_type=greedy_summary+scen=0.0+seed_clusters=0+step=summary_summary.mp4" type="video/mp4"></video></td>
+          <td><video controls class="sample_video"><source src="./summaries_audiovisual/video/a_beta=5.0+a_theta=10.0+block_length=8+c_method=kmeans+cr=15+dataset=D_eval1+emb=clap+greedy_batch=1+k_beta=6+k_theta=3+n_iter=0+num_block=12+period=15+s_type=greedy_summary+scen=0.5+seed_clusters=0+step=summary_summary.mp4" type="video/mp4"></video></td>
+          <td><video controls class="sample_video"><source src="./summaries_audiovisual/video/a_beta=5.0+a_theta=10.0+block_length=8+c_method=kmeans+cr=15+dataset=D_eval1+emb=clap+greedy_batch=1+k_beta=6+k_theta=3+n_iter=0+num_block=12+period=15+s_type=greedy_summary+scen=1.0+seed_clusters=0+step=summary_summary.mp4" type="video/mp4"></video></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pause other video elements when one is played -->
+  <script>
+    function setupCallback(elem, elems) {
+      elem.addEventListener("play", function () {
+        for (var other of elems) {
+          if (other !== elem) {
+            other.pause();
+          }
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      var elems = document.body.getElementsByTagName("video");
+      for (var elem of elems) {
+        setupCallback(elem, elems);
+      }
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,9 @@
+pann/ckpt/
+panns/__pycache__/
+__pycache__/
+transcoder_models/
+*.~lock*
+beats/models/
+embs/.model-checkpoints/
+transcoder/ckpt/
+transcoder/gomin/gan_state_dict.pt
