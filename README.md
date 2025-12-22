@@ -1,7 +1,7 @@
 # Audio Skim Generation for Environmental Audio Recordings
 
 This is the code for our paper "Audio Skim Generation for Environmental Audio Recordings". 
-Access our GitHub project page with audio examples [here](https://modantailleur.github.io/paperAudioSummary/).
+Access our GitHub project page with audio examples [here](https://modantailleur.github.io/skimear/).
 
 ## Setup
 
