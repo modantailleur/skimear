@@ -32,19 +32,19 @@
     Environmental audio recordings offer rich information for soundscape analysis but are often too lengthy for practical 
     listening. To address this, we introduce an automatic method for generating audio summaries, which we call audio skims, 
     designed to highlight key characteristics of a full-length audio. Our approach balances two objectives: Temporal Consistency 
-    (TC), which reflects how closely the summary preserves the temporal structure of the full-length audio, and Source Diversity 
-    (SD), which reflects how well the summary represents the diversity of sound sources of the full-length audio. We define a 
+    (faith.), which reflects how closely the summary preserves the temporal structure of the full-length audio, and Source Diversity 
+    (highl.), which reflects how well the summary represents the diversity of sound sources of the full-length audio. We define a 
     controllable parameter z to modulate this trade-off and propose a two-stage audio skim generation pipeline: Main Events 
     Identification (MEI) via K-means clustering of audio embeddings, and Sequencing of Main Events (SME) using a greedy algorithm 
-    optimized for the z-weighted balance between SD and TC. We validate our method on a dataset of 24-hour urban recordings 
+    optimized for the z-weighted balance between highl. and faith.. We validate our method on a dataset of 24-hour urban recordings 
     by generating 1-minute audio skims. Through both objective and subjective evaluations, we show that our method produces 
-    high-quality audio skims and enables controllable trade-offs between TC and SD. This approach supports practical and 
+    high-quality audio skims and enables controllable trade-offs between faith. and highl.. This approach supports practical and 
     customizable access to environmental recordings, with applications in soundscape research, urban planning, and public 
     communication.
     </p>
     <p>This is the companion page for the paper: TBF</p>
     <p>Please, cite as: TBF</p>
-    <p>Experience code is available in <a href="https://github.com/modantailleur/paperAudioSummary">this GitHub repository</a>.</p>
+    <p>Experience code is available in <a href="https://github.com/modantailleur/skimear">this GitHub repository</a>.</p>
   </div>
 
     <!-- Main Evaluation -->
@@ -102,9 +102,9 @@
         <!-- Second header row for scenario-based methods -->
         <tr>
             <th></th>
-            <th>High TC, Low SD (z=0.0)</th>
-            <th>Mid TC, Mid SD (z=0.5)</th>
-            <th>Low TC, High SD (z=1.0)</th>
+            <th>High faith., Low highl. (z=0.0)</th>
+            <th>Mid faith., Mid highl. (z=0.5)</th>
+            <th>Low faith., High highl. (z=1.0)</th>
         </tr>
         <tr>
             <td>Ours</td>
@@ -189,9 +189,9 @@
         <!-- Second header row for scenario-based methods -->
         <tr>
             <th></th>
-            <th>High TC, Low SD (z=0.0)</th>
-            <th>Mid TC, Mid SD (z=0.5)</th>
-            <th>Low TC, High SD (z=1.0)</th>
+            <th>High faith., Low highl. (z=0.0)</th>
+            <th>Mid faith., Mid highl. (z=0.5)</th>
+            <th>Low faith., High highl. (z=1.0)</th>
         </tr>
         <tr>
             <td>Ours</td>
@@ -276,9 +276,9 @@
         <!-- Second header row for scenario-based methods -->
         <tr>
             <th></th>
-            <th>High TC, Low SD (z=0.0)</th>
-            <th>Mid TC, Mid SD (z=0.5)</th>
-            <th>Low TC, High SD (z=1.0)</th>
+            <th>High faith., Low highl. (z=0.0)</th>
+            <th>Mid faith., Mid highl. (z=0.5)</th>
+            <th>Low faith., High highl. (z=1.0)</th>
         </tr>
         <tr>
             <td>Ours</td>
@@ -363,9 +363,9 @@
         <!-- Second header row for scenario-based methods -->
         <tr>
             <th></th>
-            <th>High TC, Low SD (z=0.0)</th>
-            <th>Mid TC, Mid SD (z=0.5)</th>
-            <th>Low TC, High SD (z=1.0)</th>
+            <th>High faith., Low highl. (z=0.0)</th>
+            <th>Mid faith., Mid highl. (z=0.5)</th>
+            <th>Low faith., High highl. (z=1.0)</th>
         </tr>
         <tr>
             <td>Ours</td>
@@ -413,7 +413,7 @@
     <p>As you can hear, since the dog audio resembles speech, the source separation and VAD do not produce perfect results in our method. However, you can hear that it preserves the sound scene better than the other methods.</p>
   </div></div>
 
-  <!-- Ablation Study -->
+  <!-- Audio-Visual Examples -->
   <div class="container mt-5" id="table_effects">
     <h2>Audio-Visual Examples</h2>
     <p>
@@ -431,9 +431,9 @@
       <thead>
         <tr>
           <th>Method</th>
-          <th>High TC, Low SD (z=0.0)</th>
-          <th>Mid TC, Mid SD (z=0.5)</th>
-          <th>Low TC, High SD (z=1.0)</th>
+          <th>High faith., Low highl. (z=0.0)</th>
+          <th>Mid faith., Mid highl. (z=0.5)</th>
+          <th>Low faith., High highl. (z=1.0)</th>
         </tr>
       </thead>
       <tbody>
@@ -442,6 +442,31 @@
           <td><video controls class="sample_video"><source src="./summaries_audiovisual/video/a_beta=5.0+a_theta=10.0+block_length=8+c_method=kmeans+cr=15+dataset=D_eval1+emb=clap+greedy_batch=1+k_beta=6+k_theta=3+n_iter=0+num_block=12+period=15+s_type=greedy_summary+scen=0.0+seed_clusters=0+step=summary_summary.mp4" type="video/mp4"></video></td>
           <td><video controls class="sample_video"><source src="./summaries_audiovisual/video/a_beta=5.0+a_theta=10.0+block_length=8+c_method=kmeans+cr=15+dataset=D_eval1+emb=clap+greedy_batch=1+k_beta=6+k_theta=3+n_iter=0+num_block=12+period=15+s_type=greedy_summary+scen=0.5+seed_clusters=0+step=summary_summary.mp4" type="video/mp4"></video></td>
           <td><video controls class="sample_video"><source src="./summaries_audiovisual/video/a_beta=5.0+a_theta=10.0+block_length=8+c_method=kmeans+cr=15+dataset=D_eval1+emb=clap+greedy_batch=1+k_beta=6+k_theta=3+n_iter=0+num_block=12+period=15+s_type=greedy_summary+scen=1.0+seed_clusters=0+step=summary_summary.mp4" type="video/mp4"></video></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Thirdo -->
+  <div class="container mt-5" id="table_effects">
+    <h2>SkimEAR from fast third-octaves</h2>
+    <p>
+        We can leverage <a href="https://github.com/modantailleur/fast-to-wav">fast-to-wav</a>, an algorithm that we have developed to transform fast third-octaves into audio waveforms, to
+        make skimear work with third-octave based embeddings. Here, we show an audio skim generated from a 24h 
+        recording of <a href="https://entrepot.recherche.data.gouv.fr/dataset.xhtml?persistentId=doi:10.57745/XWDCT4">Lorient Cense project</a>.
+    </p>
+
+    <table class="table table-responsive">
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>Mid faith., Mid highl. (z=0.5)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Ours</td>
+          <td><video controls class="sample_video"><source src="./summaries_audiovisual/video/thirdo_residential_z05.mp4" type="video/mp4"></video></td>
         </tr>
       </tbody>
     </table>
