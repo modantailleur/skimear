@@ -602,11 +602,14 @@ def main(args):
         # Load background image
         height = 720
         width = 1280
-        background = Image.open('./summaries_audiovisual/landscape.jpg').convert("RGBA")
+        if args.background is not None:
+            background = Image.open(args.background).convert("RGBA")
+        else:
+            background = Image.open('./summaries_audiovisual/landscape.png').convert("RGBA")
         background = background.resize((width, height))  # Resize to match frame size
 
         # Apply Gaussian blur to the background image
-        blurred_background = background.filter(ImageFilter.GaussianBlur(10))  # Adjust blur radius for intensity
+        blurred_background = background.filter(ImageFilter.GaussianBlur(args.noise))  # Adjust blur radius for intensity
 
         # Create a blank frame (black background)
         frame = Image.new('RGBA', (width, height), (0, 0, 0, 255))
@@ -770,6 +773,8 @@ if __name__ == "__main__":
     parser.add_argument("-i", "--input", type=str, required=True, help="Path to the input audio file.")
     parser.add_argument("-o", "--output", type=str, default=None, help="Optional path to save the output video. Extension has to be .mp4. By default, " \
                         "the output path is set to './summaries_audiovisual/video/' folder, with the same name as your input audio file but as a '.mp4'")
+    parser.add_argument("-b", "--background", type=str, default=None, help="Optional path to a background image. By default, a default image is used.")
+    parser.add_argument("-n", "--noise", type=float, default=0.0, help="Noise level to blur the background image. By default, 0.0 (no blur).")
     args = parser.parse_args()
 
     main(args)
