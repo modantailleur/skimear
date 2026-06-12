@@ -427,8 +427,8 @@ def get_greedy_summary(clusters_path, audio_path, embeddings_path, summary_path,
         Path where the generated summary audio file will be saved.
     sr : int
         Sample rate for audio processing.
-    scen : int
-        Scenario identifier used to determine selection logic.
+    scen : float
+        Scenism score (between 0 and 1). When scen is 0, high faithfulness, when scen is 1, high highlightntess.
     start_datetime : Any
         Start of the datetime range for filtering clusters.
     end_datetime : Any
@@ -582,7 +582,7 @@ def get_randsel_summary(clusters_path, audio_path, embeddings_path, summary_path
     sr : int
         Sample rate for audio processing.
     scen : int
-        Scenario identifier used to determine selection logic.
+        Scenism score (between 0 and 1). When scen is 0, high faithfulness, when scen is 1, high highlightntess.
     start_datetime : Any
         Start of the datetime range for filtering clusters.
     end_datetime : Any
