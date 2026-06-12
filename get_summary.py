@@ -825,6 +825,157 @@ def get_downsample_summary(audio_path, summary_path, sr, start_datetime,
     else:
         write(summary_path, sr, audio_files)
 
+def get_sed_summary(logits_path, audio_path, summary_path, sr, scen, 
+                        start_datetime, end_datetime, n_frames=12, 
+                        seed=0, audio_type="wav"):
+    """
+    Generates an audio summary by selecting segments based on sound event detection, with a threshold of 0.5 on each logits. 
+
+    Parameters
+    ----------
+    logits_path : str
+        Path to the file containing model logits.
+    audio_path : str
+        Path to the audio dataset.
+    summary_path : str
+        Output path for the generated summary audio file.
+    sr : int
+        Sample rate for audio processing.
+    scen : float
+        Scenism score (between 0 and 1). When scen is 0, high faithfulness, when scen is 1, high highlightntess.
+    start_datetime : datetime or str
+        Start datetime for selecting segments.
+    end_datetime : datetime or str
+        End datetime for selecting segments.
+    n_frames : int, optional
+        Number of segments to include in the summary (default is 12).
+    seed : int, optional
+        Random seed for reproducibility (default is 0).
+    audio_type : str, optional
+        Output format, either "wav" or "mp3" (default is "wav").
+
+    Returns
+    -------
+    None
+        The function writes the summary audio file and a CSV file with selected segment metadata to disk.
+
+    Notes
+    -----
+    - The function relies on helper functions such as `logits_generator`, `get_datetime_from_row`,
+    `get_audio_from_row`, and `concatenate_audios_with_overlap`.
+    - Selection is stochastic but reproducible via the provided seed.
+    - If `audio_type` is "mp3", the audio is converted to int16 and exported using Pydub.
+    """
+    
+    # Create reproducible RNG
+    rng = np.random.default_rng(seed)
+
+    # Load logits and corresponding datetimes and indices
+    full_out = np.array(list(logits_generator(logits_path, start_datetime=start_datetime, end_datetime=end_datetime)), dtype=object)
+    logits = np.array([full_out[elem, 0] for elem in range(len(full_out))])
+    dates = np.array([full_out[elem, 1] for elem in range(len(full_out))])
+    indices = np.array([full_out[elem, 2] for elem in range(len(full_out))])
+    
+    # k is the number of top features to consider based on z
+    k = int(n_frames * scen)
+
+    # Binary threshold: 0 where logits < 0.5, 1 where logits > 0.5
+    thrsh_logits = np.where(logits > 0.5, 1, 0)
+
+    # Count of elements for each class of the SED model
+    feature_counts = np.sum(thrsh_logits == 1, axis=0)
+    feature_indices = [
+        np.where(thrsh_logits[:, feature_idx] == 1)[0]
+        for feature_idx in range(thrsh_logits.shape[1])
+    ]
+
+    # Sort features from min count to max count
+    sorted_order = np.argsort(feature_counts)
+
+    # Reordered indices list
+    feature_indices_sorted = [
+        feature_indices[idx]
+        for idx in sorted_order
+        if len(feature_indices[idx]) > 0
+    ]
+
+    flat_topk = np.array([], dtype=int)
+    kn = k
+    max_attempts = 500
+    n_iter = 0
+
+    # Draw randomly k elements from the flattened version of the first k feature indices
+    # then draw n_frames - k elements from the full sorted feature indices list.
+    # Ensure no element is selected twice. If not enough unique elements are found in the first k
+    #  features, increase k until we have enough or reach max_attempts.
+    while len(flat_topk) < k and n_iter < max_attempts:
+
+        topk_block = feature_indices_sorted[:kn]
+
+        flat_topk = np.concatenate([arr for arr in topk_block]) if any(len(arr) for arr in topk_block) else np.array([], dtype=int)
+        flat_topk = np.unique(flat_topk)
+        
+        n_iter += 1
+        kn += 1
+
+    selected_from_topk = np.array([], dtype=int)
+    if not (len(flat_topk) == 0 and k != 0):
+        selected_from_topk = rng.choice(flat_topk, size=k, replace=False)
+
+    # Now draw the remaining from the whole feature_indices_sorted flattened, excluding already chosen
+    remaining_needed = n_frames - selected_from_topk.shape[0]
+    all_flat = np.concatenate([arr for arr in feature_indices_sorted]) if any(len(arr) for arr in feature_indices_sorted) else np.array([], dtype=int)
+    all_flat = np.unique(all_flat)
+
+    # Exclude already selected
+    pool_second = np.setdiff1d(all_flat, selected_from_topk, assume_unique=False)
+
+    # If there are not enough unique elements in the second pool, we can allow replacement.
+    # If pool_second is empty, we will draw from the entire set of indices 
+    # (which may include already selected ones) with replacement.
+    if remaining_needed > 0:
+        if pool_second.shape[0] == 0:
+            selected_from_second = rng.choice(np.arange(len(indices)), size=remaining_needed, replace=False)
+        elif pool_second.shape[0] < remaining_needed:
+            selected_from_second = rng.choice(pool_second, size=remaining_needed, replace=True)
+        else:
+            selected_from_second = rng.choice(pool_second, size=remaining_needed, replace=False)
+    else:
+        selected_from_second = np.array([], dtype=int)
+
+    # Final selected indices from features
+    topk_features_indices = np.concatenate([selected_from_topk, selected_from_second])
+    calib_indices = indices[topk_features_indices]
+    calib_indices = np.sort(calib_indices)
+    calib_indices = np.unique(calib_indices)
+
+    if len(calib_indices) != n_frames:
+        raise ValueError("Unable to find enough unique highest logit indices")
+
+    audios = np.array([get_audio_from_row(audio_path, k) for k in calib_indices])
+    sum_datetimes = np.array([get_datetime_from_row(audio_path, k) for k in calib_indices])
+
+    # sum_datetimes = dates[calib_indices]
+    audio_files = concatenate_audios_with_overlap(audios, sr)
+
+    df = pd.DataFrame({
+        "datetimes": sum_datetimes,
+        "row": calib_indices
+    })
+
+    df.to_csv(os.path.splitext(summary_path)[0]+".csv", index=False)
+    if audio_type == "mp3":
+        # Ensure NumPy array is float32 (Pydub expects int16 for PCM)
+        if audio_files.dtype != np.int16:
+            audio_files = (audio_files * 32767).astype(np.int16)  # Convert from float to int16
+
+        # Convert to bytes and create an AudioSegment with correct parameters
+        audio_segment = AudioSegment(
+            audio_files.tobytes(), frame_rate=sr, sample_width=2, channels=1
+        )
+        audio_segment.export(summary_path, format="mp3", bitrate="192k")
+    else:
+        write(summary_path, sr, audio_files)
 
 def get_scenic_summary(logits_path, audio_path, summary_path, sr, start_datetime, end_datetime, n_frames=12, audio_type="wav"):
     """
