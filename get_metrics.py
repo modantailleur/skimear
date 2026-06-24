@@ -14,6 +14,9 @@ import sys
 from embs.model_loader import CLAPLaionModel, MSCLAPModel, PANNsModel, VGGishModel
 import warnings
 import json
+import argparse
+import re
+
 warnings.filterwarnings("ignore", message="You are using `torch.load` with `weights_only=False`.*")
 warnings.filterwarnings("ignore", message="Some weights of.*are newly initialized")
 warnings.filterwarnings("ignore", message="torch.meshgrid: in an upcoming release.*")
@@ -313,3 +316,137 @@ def get_logit_max_similarity(max_logits_data, max_logits_summary, top_pann_to_ke
     output = mean_iou
 
     return(output)
+
+def get_metrics(summary_path, embeddings_path, clusters_path,logits_path, device, sr=32000, block_length=8, 
+                start_datetime=None, end_datetime=None, period=15):
+
+    mean_embeddings_summary = get_summary_emb_from_data_manual(summary_path, block_length, "clap", None, sr, device)
+    _, max_logits_summary = get_summary_logits_from_data_manual(summary_path, block_length, None, sr, device)
+
+    mean_embeddings_data = get_data_emb(embeddings_path, clusters_path, start_datetime, end_datetime, period=period)
+    max_logits_data = get_data_logits(logits_path, clusters_path, start_datetime, end_datetime)
+
+    dtw = get_emb_dtw(mean_embeddings_data, mean_embeddings_summary)
+    max_sim = get_logit_max_similarity(max_logits_data, max_logits_summary)
+
+    return dtw, max_sim
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Generate embeddings for audio files.")
+    parser.add_argument("embs_path", type=str, help="Path to the h5 file that contains the embeddings.")
+    parser.add_argument("logits_path", type=str, help="Path to the h5 file that contains the logits.")
+    parser.add_argument("dtw_metric_path", type=str, help="Path to the output metrics files.")
+    parser.add_argument("max_sim_metric_path", type=str, help="Path to the output metrics files.")
+    parser.add_argument("summary_dir", type=str, help="Path to the output WAV file for the summary.")
+    parser.add_argument("embeddings_path", type=str, help="Path to the output HDF5 file.")
+    parser.add_argument("clusters_path", type=str, help="Path to the output CSV file for cluster data.")
+    parser.add_argument("audio_h5_dir", type=str, help="Path to the output HDF5 file.")
+    parser.add_argument("--start_datetime", type=str, default=None, help="Start datetime for clustering in format YYYY-MM-DD HH:MM:SS. Defaults to None.")
+    parser.add_argument("--end_datetime", type=str, default=None, help="End datetime for clustering in format YYYY-MM-DD HH:MM:SS. Defaults to None.")
+    parser.add_argument("--n_frames", type=int, default=12, help="Number of frames for the summary. 12 frames corresponds to a 1min summary if \
+                         block_length=8 when the embeddings were generated, and 24 frames corresponds to a 2min summary.")
+    parser.add_argument("block_length", type=int, nargs="?", default=8, help="Length of a block of audio (in seconds).")
+    parser.add_argument("--batch_size", type=int, default=16, help="Batch size for the embedding computation.")
+    parser.add_argument("--sr", type=int, default=32000, help="Sample rate (default to 32000).")
+    parser.add_argument("--period", type=int, help="Time period for batching embeddings (in minutes). By default, set to 15 minutes.", default=15)
+
+    args = parser.parse_args()
+
+    start_datetime = datetime.strptime(args.start_datetime, "%Y-%m-%d %H:%M:%S") if args.start_datetime else None
+    end_datetime = datetime.strptime(args.end_datetime, "%Y-%m-%d %H:%M:%S") if args.end_datetime else None
+
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print('USING DEVICE:', DEVICE)
+    
+    summary_files = [
+        os.path.join(args.summary_dir, f)
+        for f in sorted(os.listdir(args.summary_dir))
+        if os.path.isfile(os.path.join(args.summary_dir, f))
+        and f.lower().endswith((".wav", ".mp3", ".flac", ".ogg", ".m4a", ".aac"))
+    ]
+
+    dtw_metrics = []
+    max_sim_metrics = []
+    scen_values = []
+
+    for summary_path in summary_files:
+
+        dtw, max_sim = get_metrics(summary_path, args.embeddings_path, args.clusters_path, args.logits_path, DEVICE, sr=args.sr, block_length=args.block_length,
+                                    start_datetime=start_datetime, end_datetime=end_datetime, period=args.period)
+
+        dtw_metrics.append(dtw)
+        max_sim_metrics.append(max_sim)
+
+        # Extract the scen value from the filename (e.g., scen100 anywhere in the filename) and convert to score [0, 1]
+        basename = os.path.splitext(os.path.basename(summary_path))[0]
+        match = re.search(r'scen(\d{3})', basename)
+        if match:
+            scen_number = int(match.group(1))
+            scen_value = (scen_number) / 100.0
+        else:
+            print(f"Warning: Could not extract scen value from filename '{basename}'. \
+                  Setting scen_value to 0. Please ensure the filename contains 'scenXXX' where \
+                  XXX is a number between 001 and 100, which corresponds to the percentage of \
+                  highlightness.")
+            scen_value = 0
+        scen_values.append(scen_value)
+
+    # Compute calibration summaries and their metrics
+    from get_summary import get_scenic_summary, get_faithful_summary
+    temp_folder = "./.cache/"
+    os.makedirs(temp_folder, exist_ok=True)
+    scenic_summary_path = os.path.join(temp_folder, "scenic_summary.wav")
+    scenic_summary, df_scenic_summary = get_scenic_summary(args.logits_path, args.audio_h5_dir, scenic_summary_path, args.sr, 
+                        args.start_datetime, args.end_datetime, n_frames=args.num_block,
+                            audio_type=args.audio_type, save=True)
+
+    faithful_summary_path = os.path.join(temp_folder, "faithful_summary.wav")
+    faithful_summary, df_faithful_summary = get_faithful_summary(args.metric_embeddings_path, args.audio_path, faithful_summary_path, args.sr, 
+                        args.start_datetime, args.end_datetime, n_frames=args.num_block, 
+                        audio_type=args.audio_type, save=True)
+    
+    faith_dtw_metric, _ = get_metrics(faithful_summary_path, args.embeddings_path, args.clusters_path, args.logits_path, DEVICE, sr=args.sr, block_length=args.block_length,
+                                                        start_datetime=args.start_datetime, end_datetime=args.end_datetime, period=args.period)
+
+    _, scenic_max_sim_metric = get_metrics(scenic_summary_path, args.embeddings_path, args.clusters_path, args.logits_path, DEVICE, sr=args.sr, block_length=args.block_length,
+                                                        start_datetime=args.start_datetime, end_datetime=args.end_datetime, period=args.period)
+
+    dtw_metrics = np.array(dtw_metrics)
+    max_sim_metrics = np.array(max_sim_metrics)
+
+    faithfulness_scores = faith_dtw_metric / dtw_metrics
+    highlightness_scores = max_sim_metrics / scenic_max_sim_metric
+
+    # AUC computation:
+
+    from utils.summary_utils import auc
+
+    # Build points: [faithfulness, highlightness]
+    points = np.column_stack((faithfulness_scores, highlightness_scores))
+
+    # Sort by faithfulness (optional since auc() already does it)
+    points = points[np.argsort(points[:, 0])]
+
+    curve_auc = auc(points)
+
+    print("Faithfulness Scores:", faithfulness_scores)
+    print("Highlightness Scores:", highlightness_scores)
+    print("z values:", scen_values)
+    print("Faithfulness-Highlightness Points:", points)
+    print("Faithfulness-Highlightness AUC:", curve_auc)
+
+    # z-correlation computation:
+    scen_values = np.array(scen_values)
+    if len(dtw_metrics) > 1 and len(scen_values) > 1:
+        pearson_r_dtw_scen = np.corrcoef(dtw_metrics, scen_values)[0, 1]
+    else:
+        pearson_r_dtw_scen = np.nan
+
+    if len(max_sim_metrics) > 1 and len(scen_values) > 1:
+        pearson_r_maxsim_scen = np.corrcoef(max_sim_metrics, scen_values)[0, 1]
+    else:
+        pearson_r_maxsim_scen = np.nan
+
+    z_correlation = (- pearson_r_dtw_scen + pearson_r_maxsim_scen)/2
+
+    print("Z-Correlation:", z_correlation)
